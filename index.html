@@ -76,8 +76,108 @@ window.onload = function() {
   });
   const eyeball = new THREE.Mesh(eyeGeometry, eyeMaterial);
   scene.add(eyeball);
-  
+
+  // Create the iris and pupil group
+  const irisGroup = new THREE.Group();
+  eyeball.add(irisGroup);
+
+  // Create the iris
+  const irisGeometry = new THREE.CircleGeometry(0.4, 64);
+  const irisMaterial = new THREE.MeshPhongMaterial({
+    color: 0x4ecca3,
+    specular: 0x888888,
+    shininess: 50,
+    side: THREE.DoubleSide
+  });
+  const iris = new THREE.Mesh(irisGeometry, irisMaterial);
+  iris.position.z = 0.99;
+  irisGroup.add(iris);
+
+  // Create the pupil
+  const pupilGeometry = new THREE.CircleGeometry(0.2, 64);
+  const pupilMaterial = new THREE.MeshPhongMaterial({
+    color: 0x000000,
+    specular: 0x222222,
+    shininess: 30,
+    side: THREE.DoubleSide
+  });
+  const pupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+  pupil.position.z = 1;
+  irisGroup.add(pupil);
+
+  // Add subtle highlight
+  const highlightGeometry = new THREE.CircleGeometry(0.05, 32);
+  const highlightMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.6
+  });
+  const highlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
+  highlight.position.set(0.2, 0.2, 1.01);
+  irisGroup.add(highlight);
+
+  // Add veins to the white part
+  const veinsTexture = new THREE.TextureLoader().load('https://websim.ai/textures/eye_veins.png');
+  const veinsMaterial = new THREE.MeshPhongMaterial({
+    map: veinsTexture,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending
+  });
+  const veinsGeometry = new THREE.SphereGeometry(1.001, 64, 64);
+  const veinsMesh = new THREE.Mesh(veinsGeometry, veinsMaterial);
+  eyeball.add(veinsMesh);
+
+  const light = new THREE.PointLight(0xffffff, 0.8, 100);
+  light.position.set(2, 2, 2);
+  scene.add(light);
+
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+
+  function onMouseMove(e) {
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const mouseY = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    // Calculate the angle to rotate the iris
+    const angleX = mouseX * Math.PI / 4; // Limit rotation to 45 degrees
+    const angleY = -mouseY * Math.PI / 4; // Invert Y-axis rotation
+
+    // Rotate the iris group
+    irisGroup.rotation.y = angleX;
+    irisGroup.rotation.x = angleY;
   }
+
+  canvas.addEventListener('mousemove', onMouseMove, false);
+  canvas.addEventListener('touchmove', onMouseMove, false);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Handle window resizing
+  window.addEventListener('resize', function() {
+    const newMaxSize = Math.min(container.clientWidth - 40, 350);
+    canvas.width = newMaxSize;
+    canvas.height = newMaxSize;
+    renderer.setSize(newMaxSize, newMaxSize);
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
+  });
+};
 </script>
 
 </body></html>
